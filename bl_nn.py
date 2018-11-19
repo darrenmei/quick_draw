@@ -34,9 +34,15 @@ def main():
     if (len(sys.argv) >= 3):
         devCSV = sys.argv[2]
     trainDF = pd.read_csv(trainCSV, header = 0)
-    X_train, Y_train = StrokesAndLabels(trainDF)
+    trainDF = trainDF.values
+    X_train = trainDF[:, 0:-5]
+    Y_train = trainDF[:, -5:].T
+    #X_train, Y_train = StrokesAndLabels(trainDF)
     devDF = pd.read_csv(devCSV, header = 0)
-    X_dev, Y_dev = StrokesAndLabels(devDF)
+    devDF = devDF.values
+    X_dev = devDF[:, 0:-5]
+    Y_dev = devDF[:, -5:].T
+    #X_dev, Y_dev = StrokesAndLabels(devDF)
     print ("X_train shape: " + str(X_train.shape))
     print ("Y_train shape: " + str(Y_train.shape))
     print ("X_dev shape: " + str(X_dev.shape))
@@ -79,20 +85,6 @@ def random_mini_batches(X, Y, mini_batch_size = 128, seed = 0):
         mini_batches.append(mini_batch)
 
     return mini_batches
-
-def expandMinibatchArrays(minibatch_X):
-    """
-    Expands the minibatch arrays from indices to binary vectors
-    Arguments:
-    minibatch_X -- training examples of the current minibatch
-    Returns:
-    mini_batch_vectors -- training expamples as binary vectors
-    """
-    X = []
-    vocabLength = 517430  #Look at vocab-length for this value. Everytime bag_of_words is run, this file is written to.
-    for sample in minibatch_X:
-        X.append(expandArray(sample, vocabLength))
-    return np.array(X).T
 
 
 def StrokesAndLabels(data):
@@ -184,7 +176,7 @@ def model(X_train, Y_train, X_dev, Y_dev, learning_rate = 0.0001,
     ops.reset_default_graph()                         # to be able to rerun the model without overwriting tf variables
     tf.set_random_seed(1)                             # to keep consistent results
     seed = 3                                          # to keep consistent results
-    (n_x, m) =  STROKE_COUNT, len(X_train)                        # (n_x: input size, m : number of examples in the train set)
+    (n_x, m) =  X_train.shape[1], len(X_train)                        # (n_x: input size, m : number of examples in the train set)
     n_y = Y_train.shape[0]                            # n_y : output size
     costs = []                                        # To keep track of the cost
 
@@ -225,7 +217,7 @@ def model(X_train, Y_train, X_dev, Y_dev, learning_rate = 0.0001,
                 # The line that runs the graph on a minibatch.
                 # Run the session to execute the "optimizer" and the "cost", the feedict should contain a minibatch for (X,Y).
                 # Turns index array of variable length to one-hot array of length vocab-length
-                _ , minibatch_cost = sess.run([optimizer, cost], feed_dict = {X:minibatch_X, Y:minibatch_Y})
+                _ , minibatch_cost = sess.run([optimizer, cost], feed_dict = {X:minibatch_X.T, Y:minibatch_Y})
 
                 epoch_cost += minibatch_cost / num_minibatches
 
@@ -241,6 +233,9 @@ def model(X_train, Y_train, X_dev, Y_dev, learning_rate = 0.0001,
         print ("Parameters have been trained!")
 
         # Calculate the correct predictions
+        # Add print operation
+        Y = tf.Print(Y, [Y], message="This is Y: ")
+        Z2 = tf.Print(Z2, [Z2], message="this is Z2")
         correct_prediction = tf.equal(tf.argmax(Z2), tf.argmax(Y))
 
         # Calculate accuracy on the train set
@@ -301,9 +296,9 @@ def initialize_parameters(n_x, m, n_y):
     tf.set_random_seed(1)                   # so that your "random" numbers match ours
 
     W1 = tf.get_variable("W1", [25,n_x], initializer = tf.contrib.layers.xavier_initializer(seed = 1))
-    b1 = tf.get_variable("b1", [25, 1], initializer= tf.zeros_initializer())
+    b1 = tf.get_variable("b1", [25, 1], initializer= tf.constant_initializer(0.0))
     W2 = tf.get_variable("W2", [n_y, 25], initializer = tf.contrib.layers.xavier_initializer(seed = 1))
-    b2 = tf.get_variable("b2", [n_y, 1], initializer = tf.zeros_initializer())
+    b2 = tf.get_variable("b2", [n_y, 1], initializer = tf.constant_initializer(0.0))
 
     parameters = {"W1": W1,
                   "b1": b1,
