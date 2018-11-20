@@ -18,9 +18,7 @@ def compute_centroids(train, num_clusters):
     return centroids
 
 def classify_points(centroids, test, num_clusters):
-    classifiers = test.iloc[:,test.shape[1] - num_clusters: test.shape[1]]
     prediction = np.zeros((test.shape[0]))
-    num_correct = 0
 
     for i in range(test.shape[0]):
         closest_dist = 1e10
@@ -33,11 +31,30 @@ def classify_points(centroids, test, num_clusters):
         if prediction[i] == -1:
             print('Closest Centroid not identified')
 
-    for i in range(test.shape[0]):
-        if classifiers.iloc[i][int(prediction[i])] == 1:
-            num_correct += 1
+    return prediction
 
-    return num_correct / test.shape[0]
+def compute_performance(prediction, test, num_clusters):
+    classifiers = test.iloc[:,test.shape[1] - num_clusters: test.shape[1]]
+    num_samples = test.shape[0]
+    num_positive_results = np.zeros(num_clusters)
+    num_correct = np.zeros(num_clusters)
+    num_relevant = np.zeros(num_clusters)
+
+    for i in range(test.shape[0]):
+        num_positive_results[int(prediction[i])] += 1
+        if classifiers.iloc[i][int(prediction[i])] == 1:
+            num_correct[int(prediction[i])] += 1
+
+    success_rates = np.zeros(num_clusters)
+    f1_scores = np.zeros(num_clusters)
+    for j in range(num_clusters):
+        num_relevant[j] = classifiers.iloc[:,j].sum()
+        precision = num_correct[j] / num_positive_results[j]
+        recall = num_correct[j] / num_relevant[j]
+        success_rates[j] = recall
+        f1_scores[j] = (2 * (precision) * (recall)) / (precision + recall)
+
+    return success_rates, f1_scores
 
 def main():
     num_clusters = 5
@@ -53,11 +70,19 @@ def main():
 
     centroids = compute_centroids(train, num_clusters)
 
-    dev_percentage = classify_points(centroids, dev, num_clusters)
-    print('Dev Percentage:', dev_percentage)
+    dev_prediction = classify_points(centroids, dev, num_clusters)
+    dev_success_rate, dev_f1 = compute_performance(dev_prediction, dev, num_clusters)
+    print('Dev Success Rates:', dev_success_rate)
+    print('Dev Average Success Rate:', np.mean(dev_success_rate))
+    print('Dev F1 Scores:', dev_f1)
+    print('Dev Average F1 Score:', np.mean(dev_f1))
 
-    test_percentage = classify_points(centroids, test, num_clusters)
-    print('Test Percentage:', test_percentage)
+    test_prediction = classify_points(centroids, test, num_clusters)
+    test_success_rate, test_f1 = compute_performance(test_prediction, test, num_clusters)
+    print('Test Success Rates:', test_success_rate)
+    print('Test Average Success Rate:', np.mean(test_success_rate))
+    print('Test F1 Scores:', test_f1)
+    print('Test Average F1 Score:', np.mean(test_f1))
 
 if __name__ == '__main__':
 	main()
