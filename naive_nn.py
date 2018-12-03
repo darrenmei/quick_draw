@@ -223,8 +223,8 @@ def main():
     bestModel = None
     bestLoss = 10000
     lrUsed = 0
-    x_train = X_train[0:500, :, :, :]
-    y_train = Y_train[0:500]
+    x_train = X_train[0:50, :, :, :]
+    y_train = Y_train[0:50]
     lrs = []
     for i in range(4):
         lrs.append(5*np.random.rand()*1e-3)
@@ -234,7 +234,7 @@ def main():
         print('Trying out learning rate of ', lr)
         model = NNet()
         optimizer = optim.Adam(model.parameters(), lr = lr)
-        modelPerf = trainModel(model, X_train, Y_train, optimizer, epochs = 25, noVal = True)
+        modelPerf = trainModel(model, x_train, y_train, optimizer, epochs = 25, noVal = True)
         lossHistories[str(lr)] = modelPerf[1]
         if modelPerf[1][len(modelPerf[1])-1] < bestLoss:
             bestLoss = modelPerf[1][len(modelPerf[1])-1]

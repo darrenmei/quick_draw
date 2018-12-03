@@ -9,14 +9,14 @@ class CNNNet(nn.Module):
         super().__init__()
         self.conv11 = nn.Conv2d(in_channels = 1, out_channels = 64, kernel_size = 7, padding = 0)
         nn.init.kaiming_normal_(self.conv11.weight)
-        self.pool12 = nn.MaxPool2d(kernel_size = 3)
+        self.pool12 = nn.MaxPool2d(kernel_size = 3, stride = 1)
 
         # 20 x 20 x 64 channels
         # w/out padding 20 x 20
         pad2 = samePad(5, 1)
         self.conv21 = nn.Conv2d(in_channels = 64, out_channels = 128, kernel_size = 5, padding = 0)
         nn.init.kaiming_normal_(self.conv21.weight)
-        self.pool22 = nn.MaxPool2d(kernel_size = 3)
+        self.pool22 = nn.MaxPool2d(kernel_size = 3, stride = 1)
 
         # 18 x 18 x 128 channels
         # w/out padding 14 x 14
@@ -25,14 +25,14 @@ class CNNNet(nn.Module):
         nn.init.kaiming_normal_(self.conv31.weight)
         self.conv32 = nn.Conv2d(in_channels = 256, out_channels = 512, kernel_size = 3, padding = 0)
         nn.init.kaiming_normal_(self.conv32.weight)
-        self.pool33 = nn.MaxPool2d(kernel_size = 3)
+        self.pool33 = nn.MaxPool2d(kernel_size = 3, stride = 1)
 
         # 16 x 16 x 512
         # w/out padding 8 x 8
         pad4 = samePad(5, 1)
         self.conv41 = nn.Conv2d(in_channels = 512, out_channels = 4096, kernel_size = 5, padding = 0)
         nn.init.kaiming_normal_(self.conv41.weight)
-        self.pool42 = nn.MaxPool2d(kernel_size = 3)
+        self.pool42 = nn.MaxPool2d(kernel_size = 3, stride = 1)
 
         # 2 x 2 x 4096 (Took out same padding)
         self.conv51 = nn.Conv2d(in_channels = 4096, out_channels = 4096, kernel_size = 2, padding = 0)
@@ -65,7 +65,8 @@ class CNNNet(nn.Module):
 
         x11 = self.conv61(x10)
 
-        x_out = self.output_fn(x11)
+        x_out = F.softmax(x11)
+        # x_out = self.output_fn(x11)
 
         return x_out
 
