@@ -40,6 +40,7 @@ def trainModel(model, x_train, y_train, optimizer, epochs = 1, mini_batch_size =
     loss_history = []
     # loss = nn.CrossEntropyLoss()
     for e in range(epochs):
+        correct = 0
         for t in range(num_batches):
             rand_indices = np.random.choice(len(x_train), mini_batch_size)
             x = torch.from_numpy(x_train[rand_indices, :, :, :])
@@ -48,11 +49,16 @@ def trainModel(model, x_train, y_train, optimizer, epochs = 1, mini_batch_size =
             #x = x.to(device=device, dtype=dtype)  # move to device, e.g. GPU
             #y = y.to(device=device, dtype=dtype)
             y = y.type(torch.LongTensor)
-            print('y shape: ', y.shape)
+            #print('y shape: ', y.shape)
 
             preds = model(x)
             _, predicted = torch.max(preds.data, 1)
-            correct += (predicted == y).sum().item()
+
+            # issue was with an incorrect performance function (i think)
+            for i in range(len(predicted)):
+                if predicted[i] == y[i]:
+                    correct += 1
+            # correct += (predicted == y).sum().item()
 
             loss = F.cross_entropy(preds, y)
 
@@ -71,10 +77,10 @@ def trainModel(model, x_train, y_train, optimizer, epochs = 1, mini_batch_size =
             if T % print_every == 0:
                 currLoss = loss.item()
                 loss_history.append(currLoss)
-                print('Epoch %d, Iteration %d, loss = %.4f' % (e, t, currLoss))
+            #     print('Epoch %d, Iteration %d, loss = %.4f' % (e, t, currLoss))
             if (num_remaining <= 0 and t == (num_batches -1)):
                 # perf = calculatePerformance(x_train, y_train, model)
-                perf = (correct/(float(len(x_train))))
+                perf = (correct/(float(mini_batch_size)))
                 print('Train performance at epoch %d is %.4f' % (e, perf))
                 if (noVal == False):
                     # perf = calculatePerformance(X_val, Y_val, model)
@@ -97,7 +103,6 @@ def trainModel(model, x_train, y_train, optimizer, epochs = 1, mini_batch_size =
 
 
             # issue was with an incorrect performance function (i think)
-            correct = 0
             for i in range(len(predicted)):
                 if predicted[i] == y[i]:
                     correct += 1
@@ -123,14 +128,16 @@ def trainModel(model, x_train, y_train, optimizer, epochs = 1, mini_batch_size =
             if T % print_every == 0:
                 currLoss = loss.item()
                 loss_history.append(currLoss)
-                print('Epoch %d, Iteration %d, loss = %.4f' % (e, num_batches, currLoss))
-            perf = (correct/(float(len(x))))
-            print('Train performance at epoch %d is %.4f' % (e, perf))
+            #     print('Epoch %d, Iteration %d, loss = %.4f' % (e, num_batches, currLoss))
+            # perf = (correct/(num_remaining))
+            # print('Train performance at epoch %d is %.4f' % (e, perf))
             if (noVal == False):
                 # perf = (correct/(float(len(x_train))))
 
                 print('Val performance at epoch %d is %.4f' % (e, perf))
             T +=1
+        perf = (correct/(len(x_train)))
+        print('Train performance at epoch %d is %.4f' % (e, perf))
     return perf, loss_history
 
 def showVisualComparisons(X, y, ex):
@@ -216,8 +223,8 @@ def main():
     bestModel = None
     bestLoss = 10000
     lrUsed = 0
-    x_train = X_train[0:50, :, :, :]
-    y_train = Y_train[0:50]
+    x_train = X_train[0:500, :, :, :]
+    y_train = Y_train[0:500]
     lrs = []
     for i in range(4):
         lrs.append(5*np.random.rand()*1e-3)
@@ -227,7 +234,7 @@ def main():
         print('Trying out learning rate of ', lr)
         model = NNet()
         optimizer = optim.Adam(model.parameters(), lr = lr)
-        modelPerf = trainModel(model, x_train, y_train, optimizer, epochs = 25, noVal = True)
+        modelPerf = trainModel(model, X_train, Y_train, optimizer, epochs = 25, noVal = True)
         lossHistories[str(lr)] = modelPerf[1]
         if modelPerf[1][len(modelPerf[1])-1] < bestLoss:
             bestLoss = modelPerf[1][len(modelPerf[1])-1]
