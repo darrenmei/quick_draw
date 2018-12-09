@@ -45,6 +45,9 @@ class CNNNet(nn.Module):
         # 1 x 1 x 250 (Took out same padding)
         self.conv61 = nn.Conv2d(in_channels = 4096, out_channels = 250, kernel_size = 1, padding = 0)
         nn.init.kaiming_normal_(self.conv61.weight)
+        
+        self.conv71 = nn.Conv2d(in_channels = 250, out_channels = 5, kernel_size = 1, padding = 0)
+        nn.init.kaiming_normal_(self.conv71.weight)
         #self.output_fn = nn.Sigmoid()
 
     def forward(self, x):
@@ -64,8 +67,10 @@ class CNNNet(nn.Module):
         x10 = self.conv51(x9)
 
         x11 = self.conv61(x10)
+        
+        x12 = self.conv71(x11)
 
-        x_out = F.softmax(x11)
+        x_out = F.softmax(x12)
         # x_out = self.output_fn(x11)
 
         return x_out
